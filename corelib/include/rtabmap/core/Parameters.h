@@ -930,6 +930,20 @@ class RTABMAP_CORE_EXPORT Parameters
     RTABMAP_PARAM(Marker, PriorsVarianceLinear,   float, 0.001, "Linear variance to set on marker priors.");
     RTABMAP_PARAM(Marker, PriorsVarianceAngular,  float, 0.001, "Angular variance to set on marker priors.");
 
+    // Manhattan/Atlanta orientation prior (3D scene-structure feature)
+    RTABMAP_PARAM(Manhattan, Enabled,            bool,  false, uFormat("Detect the dominant orthogonal scene directions (a Manhattan frame) per keyframe and add orientation-prior constraints snapping node orientations to a Manhattan/Atlanta world grid. Constraints are used by graph optimization only if \"%s\">0. Requires depth/stereo data.", kOptimizerManhattanSigma().c_str()));
+    RTABMAP_PARAM(Manhattan, Atlanta,            bool,  true,  "Atlanta-world mode: allow multiple horizontal directions sharing a single vertical axis. Set to false for a strict single-grid Manhattan world.");
+    RTABMAP_PARAM(Manhattan, Decimation,         int,   4,     "Depth image decimation applied before computing the point cloud and normals (>=1).");
+    RTABMAP_PARAM(Manhattan, MaxDepth,           float, 5.0,   "Maximum depth (m) of points used for normal clustering (0=no limit).");
+    RTABMAP_PARAM(Manhattan, NormalK,            int,   20,    "Number of nearest neighbors used to compute surface normals (used when >0).");
+    RTABMAP_PARAM(Manhattan, NormalRadius,       float, 0.0,   "Search radius (m) used to compute surface normals (used when NormalK<=0).");
+    RTABMAP_PARAM(Manhattan, Bandwidth,          float, 0.262, "Angular bandwidth (rad) for clustering surface normals into dominant directions (~15 deg).");
+    RTABMAP_PARAM(Manhattan, OrthoTolerance,     float, 0.262, "Maximum deviation (rad) from 90 deg between the two dominant directions for them to be accepted as an orthogonal frame (~15 deg).");
+    RTABMAP_PARAM(Manhattan, VerticalTolerance,  float, 0.524, "Maximum deviation (rad) between the most-vertical frame axis and the global vertical for the detection to be accepted (~30 deg).");
+    RTABMAP_PARAM(Manhattan, MinInliers,         int,   1000,  "Minimum number of normals supporting the detected frame; below this the detection is rejected.");
+    RTABMAP_PARAM(Manhattan, MatchYawTolerance,  float, 0.175, "Maximum yaw difference (rad, modulo 90 deg) to match a detection to an existing global horizontal direction; beyond it a new direction is registered in Atlanta mode (~10 deg).");
+    RTABMAP_PARAM(Manhattan, MaxCorrection,      float, 0.349, "Maximum accepted orientation correction (rad) between the odometry orientation and the snapped grid; larger disagreements are rejected as likely misdetections (~20 deg).");
+
     RTABMAP_PARAM(ImuFilter, MadgwickGain,                  double, 0.1,  "Gain of the filter. Higher values lead to faster convergence but more noise. Lower values lead to slower convergence but smoother signal, belongs in [0, 1].");
     RTABMAP_PARAM(ImuFilter, MadgwickZeta,                  double, 0.0,  "Gyro drift gain (approx. rad/s), belongs in [-1, 1].");
 

@@ -71,6 +71,7 @@ SET(SRC_FILES
     Graph.cpp
     Compression.cpp
     Link.cpp
+    ManhattanFrame.cpp
     LaserScan.cpp
     
     Optimizer.cpp
