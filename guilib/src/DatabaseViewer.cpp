@@ -287,6 +287,7 @@ DatabaseViewer::DatabaseViewer(const QString & ini, QWidget * parent) :
 	connect(ui_->actionDatabase_recovery, SIGNAL(triggered()), this, SLOT(recoverDatabase()));
 	connect(ui_->actionExport, SIGNAL(triggered()), this, SLOT(exportDatabase()));
 	connect(ui_->actionExtract_images, SIGNAL(triggered()), this, SLOT(extractImages()));
+	connect(ui_->actionReset_and_recompute_high_error_links, SIGNAL(triggered()), this, SLOT(resetAndRecomputeHighErrorLinks()));
 	connect(ui_->actionManhattan_frames_overview, SIGNAL(triggered()), this, SLOT(manhattanFramesOverview()));
 	connect(ui_->actionSplit_by_Manhattan_frame, SIGNAL(triggered()), this, SLOT(splitByManhattanFrame()));
 	connect(ui_->actionEdit_depth_image, SIGNAL(triggered()), this, SLOT(editDepthImage()));
@@ -389,6 +390,10 @@ DatabaseViewer::DatabaseViewer(const QString & ini, QWidget * parent) :
 	connect(ui_->horizontalSlider_loops, SIGNAL(valueChanged(int)), this, SLOT(sliderLoopValueChanged(int)));
 	connect(ui_->horizontalSlider_neighbors, SIGNAL(sliderMoved(int)), this, SLOT(sliderNeighborValueChanged(int)));
 	connect(ui_->horizontalSlider_loops, SIGNAL(sliderMoved(int)), this, SLOT(sliderLoopValueChanged(int)));
+	ui_->horizontalSlider_linkErrors->setTracking(false);
+	ui_->horizontalSlider_linkErrors->setEnabled(false);
+	connect(ui_->horizontalSlider_linkErrors, SIGNAL(valueChanged(int)), this, SLOT(sliderLinkErrorsValueChanged(int)));
+	connect(ui_->horizontalSlider_linkErrors, SIGNAL(sliderMoved(int)), this, SLOT(sliderLinkErrorsValueChanged(int)));
 	connect(ui_->checkBox_showOptimized, SIGNAL(stateChanged(int)), this, SLOT(updateConstraintView()));
 	connect(ui_->checkBox_show3Dclouds, SIGNAL(stateChanged(int)), this, SLOT(updateConstraintView()));
 	connect(ui_->checkBox_show2DScans, SIGNAL(stateChanged(int)), this, SLOT(updateConstraintView()));
@@ -6400,6 +6405,105 @@ void DatabaseViewer::sliderLoopValueChanged(int value)
 	}
 }
 
+void DatabaseViewer::updateLinkErrors()
+{
+	// Rank binary links by how much they deform the optimized graph: error ratio =
+	// (residual between the optimized relative pose and the measured link) / link stddev.
+	linkErrorsSorted_.clear();
+	linkErrorRatios_.clear();
+	ui_->horizontalSlider_linkErrors->setEnabled(false);
+	ui_->label_linkError->clear();
+	if(graphes_.empty())
+	{
+		return;
+	}
+	const std::map<int, Transform> & optPoses = graphes_.back();
+	std::multimap<int, Link> links = updateLinksWithModifications(links_);
+
+	std::multimap<float, Link> sorted; // ascending by error ratio
+	for(std::multimap<int, Link>::iterator iter=links.begin(); iter!=links.end(); ++iter)
+	{
+		const Link & link = iter->second;
+		if(link.from() == link.to())
+		{
+			continue; // unary self-links (gravity/Manhattan/prior) don't deform the graph
+		}
+		std::map<int, Transform>::const_iterator f = optPoses.find(link.from());
+		std::map<int, Transform>::const_iterator t = optPoses.find(link.to());
+		if(f==optPoses.end() || t==optPoses.end() || f->second.isNull() || t->second.isNull())
+		{
+			continue;
+		}
+		Transform relOpt = f->second.inverse() * t->second;    // optimized relative pose
+		Transform error = link.transform().inverse() * relOpt; // residual w.r.t. the measured link
+		float stddevLin = sqrt(link.transVariance(false));
+		float stddevAng = sqrt(link.rotVariance(false));
+		float linearRatio = stddevLin>0.0f ? error.getNorm()/stddevLin : 0.0f;
+		float angularRatio = stddevAng>0.0f ? error.getAngle(Transform::getIdentity())/stddevAng : 0.0f;
+		sorted.insert(std::make_pair(std::max(linearRatio, angularRatio), link));
+	}
+	if(sorted.empty())
+	{
+		return;
+	}
+	for(std::multimap<float, Link>::reverse_iterator iter=sorted.rbegin(); iter!=sorted.rend(); ++iter)
+	{
+		linkErrorRatios_.push_back(iter->first);
+		linkErrorsSorted_.push_back(iter->second);
+	}
+	ui_->horizontalSlider_linkErrors->setEnabled(true);
+	ui_->horizontalSlider_linkErrors->setMinimum(0);
+	ui_->horizontalSlider_linkErrors->setMaximum(linkErrorsSorted_.size()-1);
+	ui_->horizontalSlider_linkErrors->blockSignals(true);
+	ui_->horizontalSlider_linkErrors->setValue(0);
+	ui_->horizontalSlider_linkErrors->blockSignals(false);
+	sliderLinkErrorsValueChanged(0);
+}
+
+void DatabaseViewer::sliderLinkErrorsValueChanged(int value)
+{
+	if(value >= 0 && value < linkErrorsSorted_.size())
+	{
+		ui_->label_linkError->setText(QString("%1  (link %2->%3, rank %4/%5)")
+				.arg(linkErrorRatios_.at(value), 0, 'f', 2)
+				.arg(linkErrorsSorted_.at(value).from())
+				.arg(linkErrorsSorted_.at(value).to())
+				.arg(value+1)
+				.arg(linkErrorsSorted_.size()));
+		this->updateConstraintView(linkErrorsSorted_.at(value));
+	}
+}
+
+void DatabaseViewer::resetAndRecomputeHighErrorLinks()
+{
+	if(linkErrorsSorted_.empty())
+	{
+		QMessageBox::warning(this, tr("Reset and recompute links"),
+			tr("No link errors available. Update/optimize the graph first so the link-error slider is populated."));
+		return;
+	}
+	int threshold = ui_->horizontalSlider_linkErrors->value(); // worst .. current slider position
+	QList<Link> toRefine;
+	for(int i=0; i<=threshold && i<linkErrorsSorted_.size(); ++i)
+	{
+		toRefine.push_back(linkErrorsSorted_.at(i));
+	}
+	if(toRefine.empty())
+	{
+		return;
+	}
+	int button = QMessageBox::warning(this, tr("Reset and recompute links"),
+		tr("Re-register (recompute) the %1 worst link(s), down to error ratio %2, using the current "
+		   "registration/ICP settings? Their transforms will be replaced. Use 'Reset all changes' to revert.")
+			.arg(toRefine.size()).arg(linkErrorRatios_.at(threshold), 0, 'f', 2),
+		QMessageBox::Yes | QMessageBox::No, QMessageBox::No);
+	if(button != QMessageBox::Yes)
+	{
+		return;
+	}
+	this->refineLinks(toRefine);
+}
+
 void DatabaseViewer::editConstraint()
 {
 	if(ids_.size())
@@ -8283,11 +8387,16 @@ void DatabaseViewer::updateGraphView()
 		ui_->horizontalSlider_iterations->setEnabled(true);
 		ui_->spinBox_optimizationsFrom->setEnabled(true);
 		sliderIterationsValueChanged((int)graphes_.size()-1);
+		updateLinkErrors();
 	}
 	else
 	{
 		ui_->horizontalSlider_iterations->setEnabled(false);
 		ui_->spinBox_optimizationsFrom->setEnabled(false);
+		linkErrorsSorted_.clear();
+		linkErrorRatios_.clear();
+		ui_->horizontalSlider_linkErrors->setEnabled(false);
+		ui_->label_linkError->clear();
 	}
 }
 

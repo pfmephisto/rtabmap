@@ -143,6 +143,8 @@ private Q_SLOTS:
 	void update3dView();
 	void sliderNeighborValueChanged(int);
 	void sliderLoopValueChanged(int);
+	void sliderLinkErrorsValueChanged(int);
+	void resetAndRecomputeHighErrorLinks();
 	void sliderIterationsValueChanged(int);
 	void editConstraint();
 	void updateGrid();
@@ -208,6 +210,7 @@ private:
 	void updateCovariances(const QList<Link> & links);
 	void refineLinks(const QList<Link> & links);
 	void refineConstraint(int from, int to, Registration * reg, RegistrationIcp * regIcp, bool silent);
+	void updateLinkErrors(); // recompute per-link graph-deformation error ratios and fill the error slider
 	bool addConstraint(int from, int to, Registration * reg, bool silent, bool silentlyUseOptimizedGraphAsGuess = false);
 	void exportPoses(int format);
 	void exportGPS(int format);
@@ -227,6 +230,8 @@ private:
 	QMap<int, int> idToIndex_;
 	QList<rtabmap::Link> neighborLinks_;
 	QList<rtabmap::Link> loopLinks_;
+	QList<rtabmap::Link> linkErrorsSorted_; // links sorted by graph-deformation error ratio (worst first)
+	QList<float> linkErrorRatios_;          // matching error ratio (error/stddev) for each entry above
 	int lastSliderIndexBrowsed_;
 	rtabmap::DBDriver * dbDriver_;
 	QString pathDatabase_;
