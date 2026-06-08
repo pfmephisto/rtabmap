@@ -179,6 +179,7 @@ private:
 				QLabel * labelCalib,
 				QLabel * labelScan,
 				QLabel * labelGravity,
+				QLabel * labelManhattan,
 				QLabel * labelPrior,
 				QToolButton * editPriorButton,
 				QToolButton * removePriorButton,

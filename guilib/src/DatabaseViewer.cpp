@@ -377,6 +377,7 @@ DatabaseViewer::DatabaseViewer(const QString & ini, QWidget * parent) :
 	connect(ui_->checkBox_showElevation, SIGNAL(stateChanged(int)), this, SLOT(update3dView()));
 	connect(ui_->checkBox_odomFrame_3dview, SIGNAL(toggled(bool)), this, SLOT(update3dView()));
 	connect(ui_->checkBox_gravity_3dview, SIGNAL(toggled(bool)), this, SLOT(update3dView()));
+	connect(ui_->checkBox_manhattan_3dview, SIGNAL(toggled(bool)), this, SLOT(update3dView()));
 
 	ui_->horizontalSlider_neighbors->setTracking(false);
 	ui_->horizontalSlider_loops->setTracking(false);
@@ -4769,6 +4770,7 @@ void DatabaseViewer::sliderAValueChanged(int value)
 			ui_->label_calibA,
 			ui_->label_scanA,
 			ui_->label_gravityA,
+			ui_->label_manhattanA,
 			ui_->label_priorA,
 			ui_->toolButton_edit_priorA,
 			ui_->toolButton_remove_priorA,
@@ -4796,6 +4798,7 @@ void DatabaseViewer::sliderBValueChanged(int value)
 			ui_->label_calibB,
 			ui_->label_scanB,
 			ui_->label_gravityB,
+			ui_->label_manhattanB,
 			ui_->label_priorB,
 			ui_->toolButton_edit_priorB,
 			ui_->toolButton_remove_priorB,
@@ -4821,6 +4824,7 @@ void DatabaseViewer::update(int value,
 						QLabel * labelCalib,
 						QLabel * labelScan,
 						QLabel * labelGravity,
+						QLabel * labelManhattan,
 						QLabel * labelPrior,
 						QToolButton * editPriorButton,
 						QToolButton * removePriorButton,
@@ -4847,6 +4851,7 @@ void DatabaseViewer::update(int value,
 	labelCalib->clear();
 	labelScan ->clear();
 	labelGravity->clear();
+	labelManhattan->clear();
 	labelPrior->clear();
 	editPriorButton->setVisible(false);
 	removePriorButton->setVisible(false);
@@ -5011,6 +5016,15 @@ void DatabaseViewer::update(int value,
 					Eigen::Vector3f v = gravityLink.begin()->second.transform().inverse().toEigen3f() * -Eigen::Vector3f::UnitZ();
 					labelGravity->setText(QString("x=%1 y=%2 z=%3").arg(v[0]).arg(v[1]).arg(v[2]));
 					labelGravity->setToolTip(QString("roll=%1 pitch=%2 yaw=%3").arg(roll).arg(pitch).arg(yaw));
+				}
+
+				std::multimap<int, Link> manhattanLink;
+				dbDriver_->loadLinks(id, manhattanLink, Link::kManhattan);
+				if(!manhattanLink.empty())
+				{
+					float mroll, mpitch, myaw;
+					manhattanLink.begin()->second.transform().getEulerAngles(mroll, mpitch, myaw);
+					labelManhattan->setText(QString("roll=%1 pitch=%2 yaw=%3").arg(mroll).arg(mpitch).arg(myaw));
 				}
 
 				std::multimap<int, rtabmap::Link> links = updateLinksWithModifications(links_);
@@ -5245,6 +5259,15 @@ void DatabaseViewer::update(int value,
 						Transform gravityT = gravityLink.begin()->second.transform();
 						Eigen::Vector3f gravity =  gravityT.inverse().toEigen3f()*-Eigen::Vector3f::UnitZ();
 						cloudViewer_->addOrUpdateLine("gravity", pose, pose*Transform(gravity[0], gravity[1], gravity[2], 0, 0, 0), Qt::yellow, true, false);
+					}
+
+					if(!manhattanLink.empty() && ui_->checkBox_manhattan_3dview->isChecked())
+					{
+						// Draw the snapped Manhattan/Atlanta grid orientation as a coordinate frame
+						// (RGB axes) at the node: the world orientation this node is snapped toward.
+						Transform manhattanPose(pose.x(), pose.y(), pose.z(), 0, 0, 0);
+						manhattanPose = manhattanPose * manhattanLink.begin()->second.transform().rotation();
+						cloudViewer_->addOrUpdateCoordinate("manhattan", manhattanPose, 0.5, false);
 					}
 
 					//add scan
@@ -6572,6 +6595,7 @@ void DatabaseViewer::updateConstraintView(
 						ui_->label_calibA,
 						ui_->label_scanA,
 						ui_->label_gravityA,
+						ui_->label_manhattanA,
 						ui_->label_priorA,
 						ui_->toolButton_edit_priorA,
 						ui_->toolButton_remove_priorA,
@@ -6597,6 +6621,7 @@ void DatabaseViewer::updateConstraintView(
 						ui_->label_calibB,
 						ui_->label_scanB,
 						ui_->label_gravityB,
+						ui_->label_manhattanB,
 						ui_->label_priorB,
 						ui_->toolButton_edit_priorB,
 						ui_->toolButton_remove_priorB,
