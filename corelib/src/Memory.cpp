@@ -948,6 +948,8 @@ void Memory::parseParameters(const ParametersMap & parameters)
 		_globalDescriptorExtractor->parseParameters(params);
 	}
 
+	_manhattanFrame.parseParameters(params);
+
 	// do this after all params are parsed
 	// SLAM mode vs Localization mode
 	iter = params.find(Parameters::kMemIncrementalMemory());
@@ -6652,6 +6654,22 @@ Signature * Memory::createSignature(const SensorData & inputData, const Transfor
 
 		s->addLink(Link(s->id(), s->id(), Link::kGravity, orientation));
 		UDEBUG("Added gravity constraint: %s", orientation.prettyPrint().c_str());
+	}
+
+	// Manhattan / Atlanta orientation constraint
+	if(_manhattanFrame.isEnabled() && !pose.isNull())
+	{
+		Transform frameRotation;
+		float confidence = 0.0f;
+		if(_manhattanFrame.detectFrame(data, frameRotation, confidence))
+		{
+			Transform snapped;
+			if(_manhattanFrame.matchAndSnap(pose, frameRotation, snapped))
+			{
+				s->addLink(Link(s->id(), s->id(), Link::kManhattan, snapped));
+				UDEBUG("Added Manhattan constraint (confidence=%f): %s", confidence, snapped.prettyPrint().c_str());
+			}
+		}
 	}
 
 	//landmarks

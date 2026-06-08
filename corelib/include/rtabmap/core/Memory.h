@@ -35,6 +35,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "rtabmap/core/SensorData.h"
 #include "rtabmap/core/Link.h"
 #include "rtabmap/core/Features2d.h"
+#include "rtabmap/core/ManhattanFrame.h"
 #include <typeinfo>
 #include <list>
 #include <map>
@@ -390,6 +391,8 @@ private:
 	MarkerDetector * _markerDetector;
 
 	GlobalDescriptorExtractor * _globalDescriptorExtractor;
+
+	ManhattanFrame _manhattanFrame;
 };
 
 } // namespace rtabmap

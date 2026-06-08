@@ -3246,6 +3246,7 @@ bool Rtabmap::process(
 	     statistics_.reducedIds().size() ||
 		 (signature->hasLink(signature->id(), Link::kPosePrior) && !_graphOptimizer->priorsIgnored()) || // prior edge
 		 (signature->hasLink(signature->id(), Link::kGravity) && _graphOptimizer->gravitySigma()>0.0f && (!_memory->isOdomGravityUsed() || neighborLinkRefined)) || // gravity edge
+		 (signature->hasLink(signature->id(), Link::kManhattan) && _graphOptimizer->manhattanSigma()>0.0f) || // Manhattan orientation edge
 	     proximityDetectionsInTimeFound>0 ||
 		 !landmarksDetected.empty() ||
 		 signaturesRetrieved.size()) // can be different map of the current one
