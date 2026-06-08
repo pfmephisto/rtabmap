@@ -287,6 +287,8 @@ float ManhattanFrame::snapYaw(float observedYaw)
 		// Atlanta mode (or the very first direction): register a new horizontal direction.
 		horizontalYaws_.push_back(base);
 		gridBase = base;
+		UINFO("Manhattan: registered orientation direction #%d at %.1f deg",
+				(int)horizontalYaws_.size(), base * 180.0f / (float)M_PI);
 	}
 	else
 	{

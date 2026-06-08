@@ -62,6 +62,12 @@ public:
 
 	bool isEnabled() const {return enabled_;}
 
+	// Number of distinct horizontal directions (Manhattan frames) registered so far in the
+	// global Atlanta model: 1 for a single Manhattan world, more in Atlanta mode. The
+	// registered yaw bases (radians, in [0, pi/2)) are the per-frame orientations.
+	std::size_t numFrames() const {return horizontalYaws_.size();}
+	const std::vector<float> & frameDirections() const {return horizontalYaws_;}
+
 	/**
 	 * Detect the dominant orthogonal directions in a frame from its depth/stereo data.
 	 * @param data the sensor data (RGB-D or stereo with valid camera models).
