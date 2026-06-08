@@ -1273,6 +1273,9 @@ PreferencesDialog::PreferencesDialog(QWidget * parent) :
 	_ui->graphOptimization_fromGraphEnd->setObjectName(Parameters::kRGBDOptimizeFromGraphEnd().c_str());
 	_ui->graphOptimization_maxError->setObjectName(Parameters::kRGBDOptimizeMaxError().c_str());
 	_ui->graphOptimization_gravitySigma->setObjectName(Parameters::kOptimizerGravitySigma().c_str());
+	_ui->graphOptimization_manhattanEnabled->setObjectName(Parameters::kManhattanEnabled().c_str());
+	_ui->graphOptimization_manhattanAtlanta->setObjectName(Parameters::kManhattanAtlanta().c_str());
+	_ui->graphOptimization_manhattanSigma->setObjectName(Parameters::kOptimizerManhattanSigma().c_str());
 	_ui->graphOptimization_stopEpsilon->setObjectName(Parameters::kOptimizerEpsilon().c_str());
 	_ui->graphOptimization_robust->setObjectName(Parameters::kOptimizerRobust().c_str());
 	_ui->graphOptimization_priorsIgnored->setObjectName(Parameters::kOptimizerPriorsIgnored().c_str());

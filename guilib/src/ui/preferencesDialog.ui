@@ -14030,6 +14030,81 @@ If set to false, classic RTAB-Map loop closure detection is done using only imag
                       </property>
                      </widget>
                     </item>
+                    <item row="10" column="0">
+                     <widget class="QCheckBox" name="graphOptimization_manhattanEnabled">
+                      <property name="text">
+                       <string/>
+                      </property>
+                     </widget>
+                    </item>
+                    <item row="10" column="1">
+                     <widget class="QLabel" name="label_manhattanEnabled">
+                      <property name="text">
+                       <string>Detect the dominant orthogonal scene directions (a Manhattan frame) per keyframe and add orientation-prior constraints snapping node orientations to a Manhattan/Atlanta world grid. Requires depth/stereo data. Constraints are used by optimization only if Manhattan sigma below is &gt; 0.</string>
+                      </property>
+                      <property name="wordWrap">
+                       <bool>true</bool>
+                      </property>
+                      <property name="textInteractionFlags">
+                       <set>Qt::LinksAccessibleByMouse|Qt::TextSelectableByMouse</set>
+                      </property>
+                     </widget>
+                    </item>
+                    <item row="11" column="0">
+                     <widget class="QCheckBox" name="graphOptimization_manhattanAtlanta">
+                      <property name="text">
+                       <string/>
+                      </property>
+                     </widget>
+                    </item>
+                    <item row="11" column="1">
+                     <widget class="QLabel" name="label_manhattanAtlanta">
+                      <property name="text">
+                       <string>Atlanta-world mode: allow multiple horizontal directions sharing a single vertical axis. Uncheck for a strict single-grid Manhattan world.</string>
+                      </property>
+                      <property name="wordWrap">
+                       <bool>true</bool>
+                      </property>
+                      <property name="textInteractionFlags">
+                       <set>Qt::LinksAccessibleByMouse|Qt::TextSelectableByMouse</set>
+                      </property>
+                     </widget>
+                    </item>
+                    <item row="12" column="0">
+                     <widget class="QDoubleSpinBox" name="graphOptimization_manhattanSigma">
+                      <property name="suffix">
+                       <string/>
+                      </property>
+                      <property name="decimals">
+                       <number>4</number>
+                      </property>
+                      <property name="minimum">
+                       <double>0.000000000000000</double>
+                      </property>
+                      <property name="maximum">
+                       <double>10.000000000000000</double>
+                      </property>
+                      <property name="singleStep">
+                       <double>0.100000000000000</double>
+                      </property>
+                      <property name="value">
+                       <double>0.000000000000000</double>
+                      </property>
+                     </widget>
+                    </item>
+                    <item row="12" column="1">
+                     <widget class="QLabel" name="label_manhattanSigma">
+                      <property name="text">
+                       <string>Manhattan sigma value (&gt;=0, typically between 0.1 and 0.3). Weight of the orientation-prior constraints snapping node orientations to the Manhattan/Atlanta world grid. Unlike gravity (which constrains only roll and pitch), this constrains the full orientation. Set to 0 to disable. Currently supported only with g2o and GTSAM optimization strategies.</string>
+                      </property>
+                      <property name="wordWrap">
+                       <bool>true</bool>
+                      </property>
+                      <property name="textInteractionFlags">
+                       <set>Qt::LinksAccessibleByMouse|Qt::TextSelectableByMouse</set>
+                      </property>
+                     </widget>
+                    </item>
                    </layout>
                   </widget>
                  </item>
