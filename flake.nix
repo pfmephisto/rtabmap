@@ -98,6 +98,7 @@
               wrapGAppsHook3
 
               ## Required
+              git # needed for BUILD_OPENGV (CMake FetchContent clones OpenGV at build time)
               opencv
               opencv.cxxdev
               pcl'
@@ -113,6 +114,7 @@
               gtsam # graph optimization backend (enables -DWITH_GTSAM)
               boost # needed on the include path when compiling against GTSAM headers
               onetbb # GTSAM is built with TBB
+              libtorch-bin # SuperPoint/SuperGlue (enables -DWITH_TORCH); prebuilt, no source build
               ceres-solver
               yaml-cpp
               libnabo
