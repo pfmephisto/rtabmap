@@ -6664,10 +6664,15 @@ Signature * Memory::createSignature(const SensorData & inputData, const Transfor
 		if(_manhattanFrame.detectFrame(data, frameRotation, confidence))
 		{
 			Transform snapped;
-			if(_manhattanFrame.matchAndSnap(pose, frameRotation, snapped))
+			int frameIndex = 0;
+			if(_manhattanFrame.matchAndSnap(pose, frameRotation, snapped, &frameIndex))
 			{
-				s->addLink(Link(s->id(), s->id(), Link::kManhattan, snapped));
-				UDEBUG("Added Manhattan constraint (confidence=%f): %s", confidence, snapped.prettyPrint().c_str());
+				// Record which Manhattan frame (Atlanta direction) this node matched, so the
+				// project overview and map-splitting can group nodes by frame. Stored as a 1x1
+				// signed int in the link's user data.
+				cv::Mat frameId = (cv::Mat_<int>(1,1) << frameIndex);
+				s->addLink(Link(s->id(), s->id(), Link::kManhattan, snapped, cv::Mat::eye(6,6,CV_64FC1), frameId));
+				UDEBUG("Added Manhattan constraint (frame=%d, confidence=%f): %s", frameIndex, confidence, snapped.prettyPrint().c_str());
 			}
 		}
 	}

@@ -259,7 +259,7 @@ bool ManhattanFrame::detectFrame(const SensorData & data, Transform & frameRotat
 	return true;
 }
 
-float ManhattanFrame::snapYaw(float observedYaw)
+float ManhattanFrame::snapYaw(float observedYaw, int & frameIndexOut)
 {
 	// Reduce to the [0, pi/2) Manhattan cell (the frame has a 90 deg rotational symmetry).
 	float base = observedYaw - std::floor(observedYaw / (float)kHalfPi) * (float)kHalfPi;
@@ -281,12 +281,14 @@ float ManhattanFrame::snapYaw(float observedYaw)
 	if(best >= 0)
 	{
 		gridBase = horizontalYaws_[best];
+		frameIndexOut = best;
 	}
 	else if(atlanta_ || horizontalYaws_.empty())
 	{
 		// Atlanta mode (or the very first direction): register a new horizontal direction.
 		horizontalYaws_.push_back(base);
 		gridBase = base;
+		frameIndexOut = (int)horizontalYaws_.size() - 1;
 		UINFO("Manhattan: registered orientation direction #%d at %.1f deg",
 				(int)horizontalYaws_.size(), base * 180.0f / (float)M_PI);
 	}
@@ -294,6 +296,7 @@ float ManhattanFrame::snapYaw(float observedYaw)
 	{
 		// Strict single-grid mode: snap to the established direction even if beyond tolerance.
 		gridBase = horizontalYaws_[0];
+		frameIndexOut = 0;
 	}
 
 	// Return the representative (gridBase + m*pi/2) closest to the observed yaw.
@@ -301,7 +304,7 @@ float ManhattanFrame::snapYaw(float observedYaw)
 	return gridBase + m * (float)kHalfPi;
 }
 
-bool ManhattanFrame::matchAndSnap(const Transform & odomWorldPose, const Transform & frameRotation, Transform & snappedWorldOrientationOut)
+bool ManhattanFrame::matchAndSnap(const Transform & odomWorldPose, const Transform & frameRotation, Transform & snappedWorldOrientationOut, int * frameIndexOut)
 {
 	if(odomWorldPose.isNull() || frameRotation.isNull())
 	{
@@ -377,7 +380,8 @@ bool ManhattanFrame::matchAndSnap(const Transform & odomWorldPose, const Transfo
 	const float yaw = std::atan2((float)h1obs.dot(horizontalRef2_), (float)h1obs.dot(horizontalRef_));
 
 	// Snap the yaw onto the (registered) Atlanta grid and rebuild the orthonormal horizontal axes.
-	const float yawSnap = snapYaw(yaw);
+	int frameIndex = 0;
+	const float yawSnap = snapYaw(yaw, frameIndex);
 	const Eigen::Vector3d h1col = std::cos(yawSnap) * horizontalRef_ + std::sin(yawSnap) * horizontalRef2_;
 	Eigen::Vector3d h2col = vertCol.cross(h1col);
 
@@ -405,6 +409,10 @@ bool ManhattanFrame::matchAndSnap(const Transform & odomWorldPose, const Transfo
 			(float)Rtarget(0,0), (float)Rtarget(0,1), (float)Rtarget(0,2), 0.0f,
 			(float)Rtarget(1,0), (float)Rtarget(1,1), (float)Rtarget(1,2), 0.0f,
 			(float)Rtarget(2,0), (float)Rtarget(2,1), (float)Rtarget(2,2), 0.0f);
+	if(frameIndexOut)
+	{
+		*frameIndexOut = frameIndex;
+	}
 	return true;
 }
 

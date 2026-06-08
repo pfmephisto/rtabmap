@@ -89,7 +89,7 @@ public:
 	 * @return true if the snap is accepted (false if rejected, e.g. no consistent vertical or
 	 *         the required correction exceeds Manhattan/MaxCorrection).
 	 */
-	bool matchAndSnap(const Transform & odomWorldPose, const Transform & frameRotation, Transform & snappedWorldOrientationOut);
+	bool matchAndSnap(const Transform & odomWorldPose, const Transform & frameRotation, Transform & snappedWorldOrientationOut, int * frameIndexOut = 0);
 
 	/**
 	 * Reset the accumulated global Atlanta model (e.g. when starting a new session).
@@ -100,8 +100,9 @@ private:
 	// Set the in-plane reference axes from the current vertical axis.
 	void updateHorizontalBasis();
 	// Reduce a yaw to the [0, pi/2) Manhattan cell and match/register against horizontalYaws_.
-	// Returns the snapped yaw closest to the observed yaw.
-	float snapYaw(float observedYaw);
+	// Returns the snapped yaw closest to the observed yaw, and sets frameIndexOut to the index
+	// of the matched/registered direction (the Manhattan-frame id) in horizontalYaws_.
+	float snapYaw(float observedYaw, int & frameIndexOut);
 
 private:
 	// parameters
