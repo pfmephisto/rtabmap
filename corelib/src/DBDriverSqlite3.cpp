@@ -4934,6 +4934,34 @@ void DBDriverSqlite3::updateDepthImageQuery(
 	}
 }
 
+void DBDriverSqlite3::updateNodeMapIdQuery(int nodeId, int mapId) const
+{
+	UDEBUG("nodeId=%d mapId=%d", nodeId, mapId);
+	if(_ppDb)
+	{
+		UTimer timer;
+		timer.start();
+		std::string query = "UPDATE Node SET map_id=? WHERE id=?;";
+		sqlite3_stmt * ppStmt = 0;
+		int rc = sqlite3_prepare_v2(_ppDb, query.c_str(), -1, &ppStmt, 0);
+		UASSERT_MSG(rc == SQLITE_OK, uFormat("DB error (%s): %s", _version.c_str(), sqlite3_errmsg(_ppDb)).c_str());
+
+		int index = 1;
+		rc = sqlite3_bind_int(ppStmt, index++, mapId);
+		UASSERT_MSG(rc == SQLITE_OK, uFormat("DB error (%s): %s", _version.c_str(), sqlite3_errmsg(_ppDb)).c_str());
+		rc = sqlite3_bind_int(ppStmt, index++, nodeId);
+		UASSERT_MSG(rc == SQLITE_OK, uFormat("DB error (%s): %s", _version.c_str(), sqlite3_errmsg(_ppDb)).c_str());
+
+		rc = sqlite3_step(ppStmt);
+		UASSERT_MSG(rc == SQLITE_DONE, uFormat("DB error (%s): %s", _version.c_str(), sqlite3_errmsg(_ppDb)).c_str());
+
+		rc = sqlite3_finalize(ppStmt);
+		UASSERT_MSG(rc == SQLITE_OK, uFormat("DB error (%s): %s", _version.c_str(), sqlite3_errmsg(_ppDb)).c_str());
+
+		UDEBUG("Time=%fs", timer.ticks());
+	}
+}
+
 void DBDriverSqlite3::updateLaserScanQuery(
 		int nodeId,
 		const LaserScan & scan) const

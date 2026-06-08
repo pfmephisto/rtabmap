@@ -110,6 +110,8 @@ protected:
 			int nodeId,
 			const LaserScan & scan) const;
 
+	virtual void updateNodeMapIdQuery(int nodeId, int mapId) const;
+
 	virtual void addStatisticsQuery(const Statistics & statistics, bool saveWmState) const;
 	virtual void savePreviewImageQuery(const cv::Mat & image) const;
 	virtual cv::Mat loadPreviewImageQuery() const;

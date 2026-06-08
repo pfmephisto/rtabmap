@@ -111,6 +111,8 @@ private Q_SLOTS:
 	void updateOptimizedMesh();
 	void exportDatabase();
 	void extractImages();
+	void manhattanFramesOverview();
+	void splitByManhattanFrame();
 	void exportPosesRaw();
 	void exportPosesRGBDSLAMMotionCapture();
 	void exportPosesRGBDSLAM();

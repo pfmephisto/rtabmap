@@ -530,6 +530,13 @@ void DBDriver::updateDepthImage(int nodeId, const cv::Mat & image, const std::st
 	_dbSafeAccessMutex.unlock();
 }
 
+void DBDriver::updateNodeMapId(int nodeId, int mapId)
+{
+	_dbSafeAccessMutex.lock();
+	this->updateNodeMapIdQuery(nodeId, mapId);
+	_dbSafeAccessMutex.unlock();
+}
+
 void DBDriver::updateLaserScan(int nodeId, const LaserScan & scan)
 {
 	_dbSafeAccessMutex.lock();

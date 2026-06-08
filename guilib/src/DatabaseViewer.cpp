@@ -287,6 +287,8 @@ DatabaseViewer::DatabaseViewer(const QString & ini, QWidget * parent) :
 	connect(ui_->actionDatabase_recovery, SIGNAL(triggered()), this, SLOT(recoverDatabase()));
 	connect(ui_->actionExport, SIGNAL(triggered()), this, SLOT(exportDatabase()));
 	connect(ui_->actionExtract_images, SIGNAL(triggered()), this, SLOT(extractImages()));
+	connect(ui_->actionManhattan_frames_overview, SIGNAL(triggered()), this, SLOT(manhattanFramesOverview()));
+	connect(ui_->actionSplit_by_Manhattan_frame, SIGNAL(triggered()), this, SLOT(splitByManhattanFrame()));
 	connect(ui_->actionEdit_depth_image, SIGNAL(triggered()), this, SLOT(editDepthImage()));
 	connect(ui_->actionGenerate_graph_dot, SIGNAL(triggered()), this, SLOT(generateGraph()));
 	connect(ui_->actionGenerate_local_graph_dot, SIGNAL(triggered()), this, SLOT(generateLocalGraph()));
@@ -1768,6 +1770,100 @@ void DatabaseViewer::extractImages()
 
 		QMessageBox::information(this, tr("Exporting"), tr("%1 images exported!").arg(imagesExported));
 	}
+}
+
+// Read the Manhattan-frame index recorded in a node's kManhattan link user data
+// (a 1x1 int). Returns false if the node has no Manhattan link / recorded index.
+static bool getManhattanFrameId(DBDriver * dbDriver, int nodeId, int & frameOut)
+{
+	std::multimap<int, Link> links;
+	dbDriver->loadLinks(nodeId, links, Link::kManhattan);
+	if(links.empty())
+	{
+		return false;
+	}
+	cv::Mat data = links.begin()->second.uncompressUserDataConst();
+	if(data.empty() || data.type() != CV_32SC1 || (int)data.total() < 1)
+	{
+		return false;
+	}
+	frameOut = data.at<int>(0,0);
+	return true;
+}
+
+void DatabaseViewer::manhattanFramesOverview()
+{
+	if(!dbDriver_ || ids_.empty())
+	{
+		QMessageBox::warning(this, tr("Manhattan frames overview"), tr("No database open."));
+		return;
+	}
+	std::map<int, int> counts; // frame index -> node count
+	int total = 0;
+	for(size_t i=0; i<ids_.size(); ++i)
+	{
+		int frame;
+		if(getManhattanFrameId(dbDriver_, ids_[i], frame))
+		{
+			++counts[frame];
+			++total;
+		}
+	}
+	if(total == 0)
+	{
+		QMessageBox::information(this, tr("Manhattan frames overview"),
+			tr("No Manhattan-frame data found. Nodes must be mapped with Manhattan detection enabled "
+			   "and a build that records the frame index."));
+		return;
+	}
+	QString msg = tr("Distinct Manhattan frames: %1\nNodes with a frame: %2 / %3\n\n")
+			.arg((int)counts.size()).arg(total).arg((int)ids_.size());
+	for(std::map<int,int>::iterator iter=counts.begin(); iter!=counts.end(); ++iter)
+	{
+		msg += tr("  frame %1: %2 nodes (%3%)\n")
+				.arg(iter->first).arg(iter->second).arg(QString::number(100.0*iter->second/total, 'f', 1));
+	}
+	QMessageBox::information(this, tr("Manhattan frames overview"), msg);
+}
+
+void DatabaseViewer::splitByManhattanFrame()
+{
+	if(!dbDriver_ || ids_.empty())
+	{
+		QMessageBox::warning(this, tr("Split by Manhattan frame"), tr("No database open."));
+		return;
+	}
+	int button = QMessageBox::warning(this, tr("Split by Manhattan frame"),
+		tr("This relabels node map IDs by their detected Manhattan frame and writes the change to the "
+		   "database in place. Graph optimization is unaffected, but session semantics are overwritten and "
+		   "the database should NOT be reopened for further incremental mapping or localization afterwards "
+		   "(proximity and loop-closure detection are gated by map ID). Make a backup first.\n\nProceed?"),
+		QMessageBox::Yes | QMessageBox::No, QMessageBox::No);
+	if(button != QMessageBox::Yes)
+	{
+		return;
+	}
+	int relabeled = 0;
+	std::set<int> frames;
+	for(size_t i=0; i<ids_.size(); ++i)
+	{
+		int frame;
+		if(getManhattanFrameId(dbDriver_, ids_[i], frame))
+		{
+			dbDriver_->updateNodeMapId(ids_[i], frame);
+			frames.insert(frame);
+			++relabeled;
+		}
+	}
+	if(relabeled == 0)
+	{
+		QMessageBox::information(this, tr("Split by Manhattan frame"),
+			tr("No Manhattan-frame data found; nothing relabeled."));
+		return;
+	}
+	QMessageBox::information(this, tr("Split by Manhattan frame"),
+		tr("Relabeled %1 nodes into %2 Manhattan-frame map(s). Close and reopen the database to see the new grouping.")
+			.arg(relabeled).arg((int)frames.size()));
 }
 
 void DatabaseViewer::updateIds()

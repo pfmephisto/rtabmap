@@ -982,6 +982,9 @@
     <addaction name="separator"/>
     <addaction name="actionEdit_depth_image"/>
     <addaction name="separator"/>
+    <addaction name="actionManhattan_frames_overview"/>
+    <addaction name="actionSplit_by_Manhattan_frame"/>
+    <addaction name="separator"/>
     <addaction name="actionReset_all_changes"/>
     <addaction name="separator"/>
     <addaction name="actionView_3D_map"/>
@@ -3446,6 +3449,16 @@
   <action name="actionExtract_images">
    <property name="text">
     <string>Extract images...</string>
+   </property>
+  </action>
+  <action name="actionManhattan_frames_overview">
+   <property name="text">
+    <string>Manhattan frames overview...</string>
+   </property>
+  </action>
+  <action name="actionSplit_by_Manhattan_frame">
+   <property name="text">
+    <string>Split by Manhattan frame (relabel map IDs)...</string>
    </property>
   </action>
   <action name="actionView_3D_map">

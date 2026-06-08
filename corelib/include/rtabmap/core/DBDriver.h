@@ -102,6 +102,7 @@ public:
 		const std::vector<StereoCameraModel> & stereoModels);
 	void updateDepthImage(int nodeId, const cv::Mat & image, const std::string & format);
 	void updateLaserScan(int nodeId, const LaserScan & scan);
+	void updateNodeMapId(int nodeId, int mapId);
 
 public:
 	void addInfoAfterRun(int stMemSize, int lastSignAdded, int processMemUsed, int databaseMemUsed, int dictionarySize, const ParametersMap & parameters) const;
@@ -251,6 +252,8 @@ protected:
 	virtual void updateLaserScanQuery(
 			int nodeId,
 			const LaserScan & scan) const = 0;
+
+	virtual void updateNodeMapIdQuery(int nodeId, int mapId) const = 0;
 
 	virtual void addStatisticsQuery(const Statistics & statistics, bool saveWmState) const = 0;
 	virtual void savePreviewImageQuery(const cv::Mat & image) const = 0;
