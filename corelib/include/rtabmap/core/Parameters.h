@@ -448,6 +448,7 @@ class RTABMAP_CORE_EXPORT Parameters
 #else
     RTABMAP_PARAM(Optimizer, GravitySigma,    float, 0.0,      uFormat("Gravity sigma value (>=0, typically between 0.1 and 0.3). Optimization is done while preserving gravity orientation of the poses. This should be used only with visual/lidar inertial odometry approaches, for which we assume that all odometry poses are aligned with gravity. Set to 0 to disable gravity constraints. Currently supported only with g2o and GTSAM optimization strategies (see %s).", kOptimizerStrategy().c_str()));
 #endif
+    RTABMAP_PARAM(Optimizer, ManhattanSigma,  float, 0.0,      uFormat("Manhattan sigma value (>=0, typically between 0.1 and 0.3). Weight of the orientation prior constraints snapping node orientations to a Manhattan/Atlanta world grid (constraints are generated when Manhattan/Enabled is true). Unlike gravity (which constrains only roll and pitch), this constrains the full orientation. Set to 0 to disable. Currently supported only with g2o and GTSAM optimization strategies (see %s).", kOptimizerStrategy().c_str()));
 
 #ifdef RTABMAP_ORB_SLAM
     RTABMAP_PARAM(g2o, Solver,            int, 3,          "0=csparse 1=pcg 2=cholmod 3=Eigen");

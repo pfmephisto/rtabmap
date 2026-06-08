@@ -336,7 +336,7 @@ void Optimizer::getConnectedGraph(
 	UDEBUG("OUT: poses=%d links=%d", (int)posesOut.size(), (int)linksOut.size());
 }
 
-Optimizer::Optimizer(int iterations, bool slam2d, bool covarianceIgnored, double epsilon, bool robust, bool priorsIgnored, bool landmarksIgnored, float gravitySigma) :
+Optimizer::Optimizer(int iterations, bool slam2d, bool covarianceIgnored, double epsilon, bool robust, bool priorsIgnored, bool landmarksIgnored, float gravitySigma, float manhattanSigma) :
 		iterations_(iterations),
 		slam2d_(slam2d),
 		covarianceIgnored_(covarianceIgnored),
@@ -344,7 +344,8 @@ Optimizer::Optimizer(int iterations, bool slam2d, bool covarianceIgnored, double
 		robust_(robust),
 		priorsIgnored_(priorsIgnored),
 		landmarksIgnored_(landmarksIgnored),
-		gravitySigma_(gravitySigma)
+		gravitySigma_(gravitySigma),
+		manhattanSigma_(manhattanSigma)
 {
 }
 
@@ -356,7 +357,8 @@ Optimizer::Optimizer(const ParametersMap & parameters) :
 		robust_(Parameters::defaultOptimizerRobust()),
 		priorsIgnored_(Parameters::defaultOptimizerPriorsIgnored()),
 		landmarksIgnored_(Parameters::defaultOptimizerLandmarksIgnored()),
-		gravitySigma_(Parameters::defaultOptimizerGravitySigma())
+		gravitySigma_(Parameters::defaultOptimizerGravitySigma()),
+		manhattanSigma_(Parameters::defaultOptimizerManhattanSigma())
 {
 	parseParameters(parameters);
 }
@@ -371,6 +373,7 @@ void Optimizer::parseParameters(const ParametersMap & parameters)
 	Parameters::parse(parameters, Parameters::kOptimizerPriorsIgnored(), priorsIgnored_);
 	Parameters::parse(parameters, Parameters::kOptimizerLandmarksIgnored(), landmarksIgnored_);
 	Parameters::parse(parameters, Parameters::kOptimizerGravitySigma(), gravitySigma_);
+	Parameters::parse(parameters, Parameters::kOptimizerManhattanSigma(), manhattanSigma_);
 }
 
 std::map<int, Transform> Optimizer::optimizeIncremental(
