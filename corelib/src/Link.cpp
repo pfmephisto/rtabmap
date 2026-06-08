@@ -55,6 +55,8 @@ std::string Link::typeName(Type type)
 		return "Landmark";
 	if(type == Link::kGravity)
 		return "Gravity";
+	if(type == Link::kManhattan)
+		return "Manhattan";
 	return "Undefined";
 }
 

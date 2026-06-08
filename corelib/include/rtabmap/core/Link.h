@@ -49,8 +49,9 @@ public:
 		kPosePrior, // Absolute pose in /world frame, From == To
 		kLandmark,  // Transform /base_link -­­> /landmark, "From" is node observing the landmark "To" (landmark is negative id)
 		kGravity,  // Orientation of the base frame accordingly to gravity (From == To)
+		kManhattan,  // Full orientation of the base frame accordingly to a Manhattan/Atlanta world grid (From == To)
 		kEnd,
-		kSelfRefLink = 97, // Include kPosePrior and kGravity (all links where From=To)
+		kSelfRefLink = 97, // Include kPosePrior, kGravity and kManhattan (all links where From=To)
 		kAllWithLandmarks = 98,
 		kAllWithoutLandmarks = 99,
 		kUndef = 99};
