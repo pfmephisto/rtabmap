@@ -61,6 +61,7 @@ typedef Eigen::Matrix<double,Eigen::Dynamic,Eigen::Dynamic,Eigen::ColMajor> Matr
 #include "g2o/types/slam3d/types_slam3d.h"
 #include "g2o/edge_se3_xyzprior.h" // Include after types_slam3d.h to be ignored on newest g2o versions
 #include "g2o/edge_se3_gravity.h"
+#include "g2o/edge_se3_orientation.h"
 #include "g2o/edge_xy_prior.h"  // Include after types_slam2d.h to be ignored on newest g2o versions
 #include "g2o/edge_xyz_prior.h" // Include after types_slam3d.h to be ignored on newest g2o versions
 #ifdef G2O_HAVE_CSPARSE
@@ -352,7 +353,8 @@ std::map<int, Transform> OptimizerG2O::optimize(
 #endif
 		// detect if there is a global pose prior set, if so remove rootId
 		bool hasGravityConstraints = false;
-		if(!priorsIgnored() || (!isSlam2d() && gravitySigma() > 0))
+		bool hasManhattanConstraints = false;
+		if(!priorsIgnored() || (!isSlam2d() && (gravitySigma() > 0 || manhattanSigma() > 0)))
 		{
 			for(std::multimap<int, Link>::const_iterator iter=edgeConstraints.begin(); iter!=edgeConstraints.end(); ++iter)
 			{
@@ -371,10 +373,12 @@ std::map<int, Transform> OptimizerG2O::optimize(
 							iter->second.type() == Link::kGravity)
 					{
 						hasGravityConstraints = true;
-						if(priorsIgnored())
-						{
-							break;
-						}
+					}
+					else if(!isSlam2d() &&
+							manhattanSigma() > 0 &&
+							iter->second.type() == Link::kManhattan)
+					{
+						hasManhattanConstraints = true;
 					}
 				}
 			}
@@ -446,7 +450,7 @@ std::map<int, Transform> OptimizerG2O::optimize(
 					pose = a.linear();
 					pose.translation() = a.translation();
 					v3->setEstimate(pose);
-					if(id == rootId && !hasGravityConstraints)
+					if(id == rootId && !hasGravityConstraints && !hasManhattanConstraints)
 					{
 						UDEBUG("Set %d fixed", id);
 						v3->setFixed(true);
@@ -503,8 +507,9 @@ std::map<int, Transform> OptimizerG2O::optimize(
 			}
 		}
 
-		// Setup root prior (fixed x,y,z,yaw)
-		if(!isSlam2d() && rootId !=0 && hasGravityConstraints)
+		// Setup root prior (translation gauge fixed; orientation DOF left free for the
+		// gravity/Manhattan constraints to define globally)
+		if(!isSlam2d() && rootId !=0 && (hasGravityConstraints || hasManhattanConstraints))
 		{
 			g2o::VertexSE3* v1 = dynamic_cast<g2o::VertexSE3*>(optimizer.vertex(rootId));
 			if(v1)
@@ -518,8 +523,13 @@ std::map<int, Transform> OptimizerG2O::optimize(
 				e->setMeasurement(pose);
 				e->setParameterId(0, PARAM_OFFSET);
 				Eigen::Matrix<double, 6, 6> information = Eigen::Matrix<double, 6, 6>::Identity()*10e6;
-				// pitch and roll not fixed
+				// roll and pitch not fixed (gravity/Manhattan constrain them)
 				information(3,3) = information(4,4) = 1;
+				// yaw also not fixed when Manhattan constraints pin the global orientation
+				if(hasManhattanConstraints)
+				{
+					information(5,5) = 1;
+				}
 				e->setInformation(information);
 				if (!optimizer.addEdge(e))
 				{
@@ -716,6 +726,22 @@ std::map<int, Transform> OptimizerG2O::optimize(
 					g2o::VertexSE3* v1 = (g2o::VertexSE3*)optimizer.vertex(id1);
 					EdgeSE3Gravity* priorEdge(new EdgeSE3Gravity());
 					priorEdge->setMeasurement(m);
+					priorEdge->setInformation(information);
+					priorEdge->vertices()[0] = v1;
+					edge = priorEdge;
+				}
+				else if(!isSlam2d() && manhattanSigma() > 0 && iter->second.type() == Link::kManhattan && poses.find(iter->first) != poses.end())
+				{
+					// Manhattan/Atlanta orientation prior: constrain the full orientation of the
+					// node to the world grid (the target rotation stored in the link transform),
+					// leaving the translation free. Counterpart of the 2-DOF gravity edge above.
+					Eigen::Matrix3d targetR = iter->second.transform().toEigen3d().linear();
+
+					Eigen::MatrixXd information = Eigen::MatrixXd::Identity(3, 3) * 1.0/(manhattanSigma()*manhattanSigma());
+
+					g2o::VertexSE3* v1 = (g2o::VertexSE3*)optimizer.vertex(id1);
+					EdgeSE3OrientationPrior* priorEdge(new EdgeSE3OrientationPrior());
+					priorEdge->setMeasurement(targetR);
 					priorEdge->setInformation(information);
 					priorEdge->vertices()[0] = v1;
 					edge = priorEdge;
