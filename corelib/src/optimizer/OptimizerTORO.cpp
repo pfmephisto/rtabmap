@@ -409,7 +409,7 @@ bool OptimizerTORO::saveGraph(
 
 		for(std::multimap<int, Link>::const_iterator iter = edgeConstraints.begin(); iter!=edgeConstraints.end(); ++iter)
 		{
-			if (iter->second.type() != Link::kPosePrior && iter->second.type() != Link::kGravity)
+			if (iter->second.type() != Link::kPosePrior && iter->second.type() != Link::kGravity && iter->second.type() != Link::kManhattan)
 			{
 				if (isSlam2d())
 				{

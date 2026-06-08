@@ -5885,7 +5885,7 @@ void DatabaseViewer::update(int value,
 
 			Link link = this->findActiveLink(from, to);
 			bool constraintViewUpdated = false;
-			if(link.isValid() && link.type() != Link::kGravity)
+			if(link.isValid() && link.type() != Link::kGravity && link.type() != Link::kManhattan)
 			{
 				this->updateConstraintView(link, false);
 				constraintViewUpdated = true;
@@ -6509,7 +6509,8 @@ void DatabaseViewer::updateConstraintView(
 				 link.type()==Link::kUserClosure?"User link":
 				 link.type()==Link::kLandmark?"Landmark "+QString::number(-link.to()):
 				 link.type()==Link::kVirtualClosure?"Virtual link":
-				 link.type()==Link::kGravity?"Gravity link":"Undefined"));
+				 link.type()==Link::kGravity?"Gravity link":
+				 link.type()==Link::kManhattan?"Manhattan link":"Undefined"));
 	ui_->label_variance->setText(QString("%1, %2")
 			.arg(sqrt(link.transVariance()))
 			.arg(sqrt(link.rotVariance())));
