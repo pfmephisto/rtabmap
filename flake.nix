@@ -148,7 +148,11 @@
               gtsam # graph optimization backend (enables -DWITH_GTSAM)
               boost # needed on the include path when compiling against GTSAM headers
               onetbb # GTSAM is built with TBB
-              libtorch-bin # SuperPoint/SuperGlue (enables -DWITH_TORCH); prebuilt, no source build
+              # SuperPoint (enables -DWITH_TORCH); prebuilt. Use the CPU build: the CUDA build's
+              # TorchConfig.cmake pulls find_package(CUDAToolkit) at configure time, which needs the
+              # full split CUDA toolkit in the shell. SuperPoint is small, so CPU is fine here
+              # (set SuperPoint/Cuda=false). For GPU Torch, add the CUDA toolkit components instead.
+              (libtorch-bin.override {cudaSupport = false;})
               ceres-solver
               yaml-cpp
               libnabo
