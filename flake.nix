@@ -25,9 +25,20 @@
             cudaSupport = true;
             allowUnfree = true;
             hardware.nvidia.open = false;
+            # Allow the CUDA toolkit and ML unfree packages (needed by cudaSupport,
+            # WITH_TORCH and WITH_CUDASIFT). An empty predicate would override
+            # allowUnfree and block everything, including CUDA.
             allowUnfreePredicate = pkg:
               builtins.elem (lib.getName pkg) [
-              ];
+                "libtorch"
+                "cudnn"
+                "nccl"
+                "tensorrt"
+                "cudatoolkit"
+              ]
+              || lib.hasPrefix "cuda" (lib.getName pkg)
+              || lib.hasPrefix "libcu" (lib.getName pkg)
+              || lib.hasPrefix "libnv" (lib.getName pkg);
           };
 
           # Set overlays and custom fixes for broken packages
@@ -45,8 +56,31 @@
           #  else
           #    [ ];
         };
+        # CudaSift (matlabbe fork) for WITH_CUDASIFT. Builds from source with CUDA, so it
+        # is exposed as a package to build one at a time (RAM-friendly): nix build .#cudasift
+        # Once it builds on your machine, add it to the dev shell and configure rtabmap with
+        # -DWITH_CUDASIFT=ON. CUDA architecture flags may need tuning for your GPU.
+        cudasift = pkgs.stdenv.mkDerivation {
+          pname = "cudasift";
+          version = "3.0.0-matlabbe";
+          src = pkgs.fetchFromGitHub {
+            owner = "matlabbe";
+            repo = "CudaSift";
+            rev = "995d22e4d2df8915aa6bfa216126e25a7a42fe41";
+            sha256 = "01q26jfajia8n885g7hw5i7l2wzsrx5h9pp14vrx03zv7srrz483";
+          };
+          nativeBuildInputs = [pkgs.cmake pkgs.cudaPackages.cuda_nvcc];
+          buildInputs = [pkgs.opencv pkgs.cudaPackages.cudatoolkit];
+          cmakeFlags = [
+            (lib.cmakeFeature "CMAKE_POLICY_VERSION_MINIMUM" "3.5")
+          ];
+        };
       in {
         formatter = nixpkgs.legacyPackages.${system}.alejandra;
+
+        packages = {
+          inherit cudasift;
+        };
 
         #packages =
         #  if builtins.pathExists ./pkgs
