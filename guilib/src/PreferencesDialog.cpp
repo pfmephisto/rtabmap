@@ -1273,9 +1273,20 @@ PreferencesDialog::PreferencesDialog(QWidget * parent) :
 	_ui->graphOptimization_fromGraphEnd->setObjectName(Parameters::kRGBDOptimizeFromGraphEnd().c_str());
 	_ui->graphOptimization_maxError->setObjectName(Parameters::kRGBDOptimizeMaxError().c_str());
 	_ui->graphOptimization_gravitySigma->setObjectName(Parameters::kOptimizerGravitySigma().c_str());
-	_ui->graphOptimization_manhattanEnabled->setObjectName(Parameters::kManhattanEnabled().c_str());
-	_ui->graphOptimization_manhattanAtlanta->setObjectName(Parameters::kManhattanAtlanta().c_str());
-	_ui->graphOptimization_manhattanSigma->setObjectName(Parameters::kOptimizerManhattanSigma().c_str());
+	// Manhattan / Atlanta orientation prior (the checkable group box is the enable flag)
+	_ui->groupBox_manhattan->setObjectName(Parameters::kManhattanEnabled().c_str());
+	_ui->manhattan_sigma->setObjectName(Parameters::kOptimizerManhattanSigma().c_str());
+	_ui->manhattan_atlanta->setObjectName(Parameters::kManhattanAtlanta().c_str());
+	_ui->manhattan_minInliers->setObjectName(Parameters::kManhattanMinInliers().c_str());
+	_ui->manhattan_maxCorrection->setObjectName(Parameters::kManhattanMaxCorrection().c_str());
+	_ui->manhattan_matchYawTolerance->setObjectName(Parameters::kManhattanMatchYawTolerance().c_str());
+	_ui->manhattan_orthoTolerance->setObjectName(Parameters::kManhattanOrthoTolerance().c_str());
+	_ui->manhattan_verticalTolerance->setObjectName(Parameters::kManhattanVerticalTolerance().c_str());
+	_ui->manhattan_bandwidth->setObjectName(Parameters::kManhattanBandwidth().c_str());
+	_ui->manhattan_decimation->setObjectName(Parameters::kManhattanDecimation().c_str());
+	_ui->manhattan_maxDepth->setObjectName(Parameters::kManhattanMaxDepth().c_str());
+	_ui->manhattan_normalK->setObjectName(Parameters::kManhattanNormalK().c_str());
+	_ui->manhattan_normalRadius->setObjectName(Parameters::kManhattanNormalRadius().c_str());
 	_ui->graphOptimization_stopEpsilon->setObjectName(Parameters::kOptimizerEpsilon().c_str());
 	_ui->graphOptimization_robust->setObjectName(Parameters::kOptimizerRobust().c_str());
 	_ui->graphOptimization_priorsIgnored->setObjectName(Parameters::kOptimizerPriorsIgnored().c_str());
