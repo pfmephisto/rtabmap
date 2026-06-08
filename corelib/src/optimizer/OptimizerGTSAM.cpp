@@ -41,6 +41,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <gtsam/inference/Key.h>
 #include <gtsam/inference/Symbol.h>
 #include <gtsam/slam/PriorFactor.h>
+#include <gtsam/slam/PoseRotationPrior.h>
 #include <gtsam/slam/BetweenFactor.h>
 #include <gtsam/sam/BearingFactor.h>
 #include <gtsam/sam/BearingRangeFactor.h>
@@ -165,7 +166,8 @@ std::map<int, Transform> OptimizerGTSAM::optimize(
 		// detect if there is a global pose prior set, if so remove rootId
 		bool hasGPSPrior = false;
 		bool hasGravityConstraints = false;
-		if(!priorsIgnored() || (!isSlam2d() && gravitySigma() > 0))
+		bool hasManhattanConstraints = false;
+		if(!priorsIgnored() || (!isSlam2d() && (gravitySigma() > 0 || manhattanSigma() > 0)))
 		{
 			for(std::multimap<int, Link>::const_iterator iter=edgeConstraints.begin(); iter!=edgeConstraints.end(); ++iter)
 			{
@@ -188,10 +190,17 @@ std::map<int, Transform> OptimizerGTSAM::optimize(
 					if(iter->second.type() == Link::kGravity)
 					{
 						hasGravityConstraints = true;
-						if(priorsIgnored())
-						{
-							break;
-						}
+					}
+					else if(iter->second.type() == Link::kManhattan)
+					{
+						hasManhattanConstraints = true;
+					}
+					// When only priors are ignored, we just need to know whether
+					// gravity/Manhattan constraints exist to relax the root prior;
+					// stop as soon as everything relevant is known.
+					if(priorsIgnored() && hasGravityConstraints && (hasManhattanConstraints || manhattanSigma() <= 0))
+					{
+						break;
 					}
 				}
 			}
@@ -217,7 +226,9 @@ std::map<int, Transform> OptimizerGTSAM::optimize(
 			{
 				gtsam::noiseModel::Diagonal::shared_ptr priorNoise = gtsam::noiseModel::Diagonal::Variances(
 						(gtsam::Vector(6) <<
-								(hasGravityConstraints?2:1e-2), (hasGravityConstraints?2:1e-2), (hasGPSPrior?1e-2:1e-9), // roll, pitch, fixed yaw if there are no priors
+								// roll/pitch relaxed when gravity or Manhattan constrain them; yaw also relaxed
+								// when Manhattan constraints exist (they pin the global orientation, including yaw)
+								((hasGravityConstraints||hasManhattanConstraints)?2:1e-2), ((hasGravityConstraints||hasManhattanConstraints)?2:1e-2), (hasManhattanConstraints?2:(hasGPSPrior?1e-2:1e-9)),
 								(hasGPSPrior?2:1e-2), hasGPSPrior?2:1e-2, hasGPSPrior?2:1e-2 // xyz
 								).finished());
 				graph.add(gtsam::PriorFactor<gtsam::Pose3>(rootId, gtsam::Pose3(initialPose.toEigen4d()), priorNoise));
@@ -482,6 +493,16 @@ std::map<int, Transform> OptimizerGTSAM::optimize(
 #else
 					graph.add(gtsam::AttitudeFactor<gtsam::Pose3>(iter->first, nZ, model, bGMeas));
 #endif
+					lastAddedConstraints_.push_back(ConstraintToFactor(iter->first, iter->first, -1));
+				}
+				else if(!isSlam2d() && manhattanSigma() > 0 && iter->second.type() == Link::kManhattan && newPoses.find(iter->first) != newPoses.end())
+				{
+					// Manhattan/Atlanta orientation prior: snap the full orientation of the node
+					// to the world grid. Unlike gravity (2-DOF attitude on the up vector), this is
+					// a full 3-DOF prior on the rotation while leaving the translation free.
+					gtsam::Rot3 targetR = gtsam::Pose3(iter->second.transform().toEigen4d()).rotation();
+					gtsam::SharedNoiseModel model = gtsam::noiseModel::Isotropic::Sigma(3, manhattanSigma());
+					graph.add(gtsam::PoseRotationPrior<gtsam::Pose3>(iter->first, targetR, model));
 					lastAddedConstraints_.push_back(ConstraintToFactor(iter->first, iter->first, -1));
 				}
 			}
