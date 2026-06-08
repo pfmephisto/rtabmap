@@ -7815,6 +7815,7 @@ void DatabaseViewer::updateGraphView()
 		int totalPriors = 0;
 		int totalLandmarks = 0;
 		int totalGravity = 0;
+		int totalManhattan = 0;
 		std::multimap<int, int> uniqueLinks;
 		for(std::multimap<int, rtabmap::Link>::iterator iter=links.begin(); iter!=links.end();)
 		{
@@ -7914,11 +7915,16 @@ void DatabaseViewer::updateGraphView()
 				if(isUnique)
 					++totalGravity;
 			}
+			else if(iter->second.type() == Link::kManhattan)
+			{
+				if(isUnique)
+					++totalManhattan;
+			}
 			++iter;
 		}
 		updateLoopClosuresSlider();
 
-		ui_->label_loopClosures->setText(tr("(%1, %2, %3, %4, %5, %6, %7, %8, %9)")
+		ui_->label_loopClosures->setText(tr("(%1, %2, %3, %4, %5, %6, %7, %8, %9, %10)")
 				.arg(totalNeighbor)
 				.arg(totalNeighborMerged)
 				.arg(totalGlobal)
@@ -7927,7 +7933,8 @@ void DatabaseViewer::updateGraphView()
 				.arg(totalUser)
 				.arg(totalPriors)
 				.arg(totalLandmarks)
-				.arg(totalGravity));
+				.arg(totalGravity)
+				.arg(totalManhattan));
 
 		// remove intermediate nodes?
 		if(ui_->checkBox_ignoreIntermediateNodes->isVisible() &&
