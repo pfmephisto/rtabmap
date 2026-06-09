@@ -14030,7 +14030,33 @@ If set to false, classic RTAB-Map loop closure detection is done using only imag
                       </property>
                      </widget>
                     </item>
-                    <item row="10" column="0" colspan="2">
+                   </layout>
+                  </widget>
+                 </item>
+                 <item>
+                  <spacer name="verticalSpacer_graphOpt2">
+                   <property name="orientation">
+                    <enum>Qt::Vertical</enum>
+                   </property>
+                   <property name="sizeHint" stdset="0">
+                    <size>
+                     <width>17</width>
+                     <height>400</height>
+                    </size>
+                   </property>
+                  </spacer>
+                 </item>
+                </layout>
+               </widget>
+               <widget class="QWidget" name="page_manhattan">
+                <layout class="QVBoxLayout" name="verticalLayout_manhattanPage">
+                 <item>
+                  <widget class="QGroupBox" name="groupBox_manhattan2">
+                   <property name="title">
+                    <string>Manhattan</string>
+                   </property>
+                   <layout class="QVBoxLayout" name="verticalLayout_manhattanInner">
+                    <item>
                      <widget class="QGroupBox" name="groupBox_manhattan">
                       <property name="title">
                        <string>Manhattan / Atlanta orientation prior (3D feature)</string>
@@ -14207,21 +14233,21 @@ If set to false, classic RTAB-Map loop closure detection is done using only imag
                       </layout>
                      </widget>
                     </item>
+                    <item>
+                     <spacer name="verticalSpacer_manhattan">
+                      <property name="orientation">
+                       <enum>Qt::Vertical</enum>
+                      </property>
+                      <property name="sizeHint" stdset="0">
+                       <size>
+                        <width>17</width>
+                        <height>2098</height>
+                       </size>
+                      </property>
+                     </spacer>
+                    </item>
                    </layout>
                   </widget>
-                 </item>
-                 <item>
-                  <spacer name="verticalSpacer_48">
-                   <property name="orientation">
-                    <enum>Qt::Vertical</enum>
-                   </property>
-                   <property name="sizeHint" stdset="0">
-                    <size>
-                     <width>17</width>
-                     <height>2098</height>
-                    </size>
-                   </property>
-                  </spacer>
                  </item>
                 </layout>
                </widget>
